@@ -38,45 +38,57 @@ button{font:inherit;cursor:pointer;border:0;padding:15px 22px;border-radius:16px
   <h1>Закажи <em>свой трек</em></h1>
   <p id="msg">Подключаемся к диджею…</p>
   <button id="retry" hidden>Попробовать снова</button>
+  <small id="diag" style="color:rgba(168,155,194,.55);font-size:11px;min-height:14px"></small>
 </main>
 <script>
 // Постоянная страница для QR-кода. Ноутбук диджея при запуске пишет свою текущую ссылку в current.json этого репозитория,
-// а эта страница находит её, проверяет, что сервис на связи, и перекидывает гостя.
+// а эта страница находит её и перекидывает гостя.
 (function () {
   var owner = location.hostname.split(".")[0];
   var repo = location.pathname.split("/").filter(Boolean)[0] || (owner + ".github.io");
   var SAFE = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
-  var msg = document.getElementById("msg"), retry = document.getElementById("retry"), box = document.getElementById("box");
+  var msg = document.getElementById("msg"), retry = document.getElementById("retry"), box = document.getElementById("box"), diag = document.getElementById("diag");
+  var log = [];
+  function note(t) { log.push(t); }
   function withTimeout(p, ms) { return Promise.race([p, new Promise(function (_, no) { setTimeout(function () { no(new Error("timeout")); }, ms); })]); }
   function sources() {
     var t = Date.now();
     return [
-      "https://api.github.com/repos/" + owner + "/" + repo + "/contents/current.json?t=" + t,
-      "https://raw.githubusercontent.com/" + owner + "/" + repo + "/HEAD/current.json?t=" + t,
-      "current.json?t=" + t
+      ["api", "https://api.github.com/repos/" + owner + "/" + repo + "/contents/current.json?ref=main&t=" + t],
+      ["raw", "https://raw.githubusercontent.com/" + owner + "/" + repo + "/main/current.json?t=" + t],
+      ["pages", "current.json?t=" + t]
     ];
   }
-  function load(u) {
-    var api = u.indexOf("api.github.com") > -1;
-    return withTimeout(fetch(u, { cache: "no-store", headers: api ? { Accept: "application/vnd.github.raw+json" } : {} }), 7000)
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  function load(src) {
+    var api = src[0] === "api";
+    return withTimeout(fetch(src[1], { cache: "no-store", headers: api ? { Accept: "application/vnd.github.raw+json" } : {} }), 7000)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function (t) { return JSON.parse(t); });
   }
   function offline(text) {
     box.classList.add("off"); msg.textContent = text; retry.hidden = false;
+    diag.textContent = log.join(" · ");
   }
   function go() {
+    log = []; diag.textContent = "";
     box.classList.remove("off"); retry.hidden = true; msg.textContent = "Подключаемся к диджею…";
     var list = sources(), i = 0, best = null;
     function next() {
       if (i >= list.length) return decide();
-      load(list[i++]).then(function (d) { if (d && (!best || d.updated > best.updated)) best = d; if (i === 1 && best) return decide(); next(); }, next);
+      var src = list[i++];
+      load(src).then(function (d) {
+        note(src[0] + ": " + (d && d.online ? "в эфире" : "не в эфире"));
+        if (d && (!best || String(d.updated) > String(best.updated))) best = d;
+        if (src[0] === "api") return decide();
+        next();
+      }, function (e) { note(src[0] + ": " + e.message); next(); });
     }
     function decide() {
       if (!best) return offline("Не получилось связаться. Проверь интернет и попробуй ещё раз.");
-      if (!best.online || !SAFE.test(best.url || "")) return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка.");
-      withTimeout(fetch(best.url + "/api/config", { cache: "no-store" }), 8000)
-        .then(function (r) { if (!r.ok) throw 0; location.replace(best.url + "/"); })
-        .catch(function () { offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка."); });
+      if (!best.online) return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка.");
+      if (!SAFE.test(best.url || "")) { note("неверная ссылка"); return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка."); }
+      msg.textContent = "Открываем заказ трека…";
+      location.replace(best.url + "/");
     }
     next();
   }
