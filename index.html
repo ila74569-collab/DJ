@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E0918">
+<title>Дроп — закажи трек</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Manrope:wght@500;700&display=swap">
+<style>
+:root{--ink:#0E0918;--panel:#18112A;--line:rgba(236,226,255,.16);--text:#F7F2FF;--muted:#A89BC2;--coral:#FF4F6D;--amber:#FFB23E;--stage:linear-gradient(115deg,#FF4F6D 0%,#FF7A4D 48%,#FFB23E 100%);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--text);font-family:"Manrope",system-ui,sans-serif;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:hidden}
+.glow{position:fixed;inset:0;pointer-events:none}
+.glow i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(90px);opacity:.25;animation:drift 16s ease-in-out infinite alternate}
+.glow i:nth-child(1){background:var(--coral);left:-20vmax;top:-20vmax}
+.glow i:nth-child(2){background:#7A4DFF;right:-25vmax;bottom:-25vmax;animation-duration:21s}
+@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.1)}}
+main{position:relative;text-align:center;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.disc{width:84px;height:84px;border-radius:50%;background:repeating-radial-gradient(circle,#120c1d 0 2px,#1c1430 2px 3px);box-shadow:0 0 0 1px var(--line),0 0 60px rgba(255,79,109,.45);position:relative;animation:spin 2.4s linear infinite}
+.disc::after{content:"";position:absolute;inset:30px;border-radius:50%;background:var(--stage);box-shadow:0 0 0 4px #120c1d}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-family:"Unbounded",system-ui,sans-serif;font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.05;margin:0}
+h1 em{font-style:normal;background:var(--stage);-webkit-background-clip:text;background-clip:text;color:transparent}
+p{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
+button{font:inherit;cursor:pointer;border:0;padding:15px 22px;border-radius:16px;background:var(--stage);color:#1d0b12;font-family:"Unbounded",system-ui,sans-serif;font-weight:700;font-size:15px}
+.off .disc{animation:none;filter:grayscale(.7);opacity:.6}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"><i></i><i></i></div>
+<main id="box">
+  <div class="disc" aria-hidden="true"></div>
+  <h1>Закажи <em>свой трек</em></h1>
+  <p id="msg">Подключаемся к диджею…</p>
+  <button id="retry" hidden>Попробовать снова</button>
+</main>
+<script>
+// Постоянная страница для QR-кода. Ноутбук диджея при запуске пишет свою текущую ссылку в current.json этого репозитория,
+// а эта страница находит её, проверяет, что сервис на связи, и перекидывает гостя.
+(function () {
+  var owner = location.hostname.split(".")[0];
+  var repo = location.pathname.split("/").filter(Boolean)[0] || (owner + ".github.io");
+  var SAFE = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
+  var msg = document.getElementById("msg"), retry = document.getElementById("retry"), box = document.getElementById("box");
+  function withTimeout(p, ms) { return Promise.race([p, new Promise(function (_, no) { setTimeout(function () { no(new Error("timeout")); }, ms); })]); }
+  function sources() {
+    var t = Date.now();
+    return [
+      "https://api.github.com/repos/" + owner + "/" + repo + "/contents/current.json?t=" + t,
+      "https://raw.githubusercontent.com/" + owner + "/" + repo + "/HEAD/current.json?t=" + t,
+      "current.json?t=" + t
+    ];
+  }
+  function load(u) {
+    var api = u.indexOf("api.github.com") > -1;
+    return withTimeout(fetch(u, { cache: "no-store", headers: api ? { Accept: "application/vnd.github.raw+json" } : {} }), 7000)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  function offline(text) {
+    box.classList.add("off"); msg.textContent = text; retry.hidden = false;
+  }
+  function go() {
+    box.classList.remove("off"); retry.hidden = true; msg.textContent = "Подключаемся к диджею…";
+    var list = sources(), i = 0, best = null;
+    function next() {
+      if (i >= list.length) return decide();
+      load(list[i++]).then(function (d) { if (d && (!best || d.updated > best.updated)) best = d; if (i === 1 && best) return decide(); next(); }, next);
+    }
+    function decide() {
+      if (!best) return offline("Не получилось связаться. Проверь интернет и попробуй ещё раз.");
+      if (!best.online || !SAFE.test(best.url || "")) return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка.");
+      withTimeout(fetch(best.url + "/api/config", { cache: "no-store" }), 8000)
+        .then(function (r) { if (!r.ok) throw 0; location.replace(best.url + "/"); })
+        .catch(function () { offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка."); });
+    }
+    next();
+  }
+  retry.onclick = go;
+  go();
+})();
+</script>
+</body>
+</html>
