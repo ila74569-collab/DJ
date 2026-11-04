@@ -46,7 +46,7 @@ button{font:inherit;cursor:pointer;border:0;padding:15px 22px;border-radius:16px
 (function () {
   var owner = location.hostname.split(".")[0];
   var repo = location.pathname.split("/").filter(Boolean)[0] || (owner + ".github.io");
-  var SAFE = /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
+  var SAFE = /^https:\/\/[a-z0-9-]+\.(lhr\.life|lhrtunnel\.link|trycloudflare\.com)$/;
   var msg = document.getElementById("msg"), retry = document.getElementById("retry"), box = document.getElementById("box"), diag = document.getElementById("diag");
   var log = [];
   function note(t) { log.push(t); }
