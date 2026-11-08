@@ -4,93 +4,1043 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E0918">
-<title>Дроп — закажи трек</title>
-<link rel="preconnect" href="https://api.github.com" crossorigin>
-<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+<title>Дроп — закажи трек у DJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
 <style>
-:root{--ink:#0E0918;--panel:#18112A;--line:rgba(236,226,255,.16);--text:#F7F2FF;--muted:#A89BC2;--coral:#FF4F6D;--amber:#FFB23E;--stage:linear-gradient(115deg,#FF4F6D 0%,#FF7A4D 48%,#FFB23E 100%);color-scheme:dark}
+/* Layout: club-night control room — guest phone on the left, DJ console on the right; on phones they become two tabs */
+:root{
+  --ink:#0E0918;
+  --panel:#18112A;
+  --panel-2:#221838;
+  --panel-3:#2C2146;
+  --line:rgba(236,226,255,.09);
+  --line-2:rgba(236,226,255,.16);
+  --text:#F7F2FF;
+  --muted:#A89BC2;
+  --dim:#6F6488;
+  --coral:#FF4F6D;
+  --amber:#FFB23E;
+  --mint:#38E8C2;
+  --sky:#6FB8FF;
+  --stage:linear-gradient(115deg,#FF4F6D 0%,#FF7A4D 48%,#FFB23E 100%);
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:18px;
+  color-scheme:dark;
+}
 *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:var(--ink);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:hidden}
-.glow{position:fixed;inset:0;pointer-events:none}
-.glow i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(90px);opacity:.25;animation:drift 16s ease-in-out infinite alternate}
-.glow i:nth-child(1){background:var(--coral);left:-20vmax;top:-20vmax}
-.glow i:nth-child(2){background:#7A4DFF;right:-25vmax;bottom:-25vmax;animation-duration:21s}
-@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.1)}}
-main{position:relative;text-align:center;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:18px}
-.disc{width:84px;height:84px;border-radius:50%;background:repeating-radial-gradient(circle,#120c1d 0 2px,#1c1430 2px 3px);box-shadow:0 0 0 1px var(--line),0 0 60px rgba(255,79,109,.45);position:relative;animation:spin 2.4s linear infinite}
-.disc::after{content:"";position:absolute;inset:30px;border-radius:50%;background:var(--stage);box-shadow:0 0 0 4px #120c1d}
+html,body{min-height:100%}
+body{
+  background:var(--ink);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 32px;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--ink)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:10px}
+
+/* ambient stage lights */
+.lights{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.lights i{position:absolute;width:46vmax;height:46vmax;border-radius:50%;filter:blur(90px);opacity:.22;animation:drift 18s ease-in-out infinite alternate}
+.lights i:nth-child(1){background:var(--coral);left:-14vmax;top:-12vmax}
+.lights i:nth-child(2){background:var(--amber);right:-16vmax;top:20vh;animation-duration:23s;opacity:.14}
+.lights i:nth-child(3){background:#7A4DFF;left:20vw;bottom:-26vmax;animation-duration:27s;opacity:.16}
+@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.12)}}
+
+.wrap{position:relative;z-index:1;max-width:1220px;margin:0 auto}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px;background:linear-gradient(var(--ink) 70%,transparent)}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.02em}
+.logo b{background:var(--stage);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo .disc{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,var(--ink) 0 18%,var(--amber) 19% 26%,#1b1428 27% 100%);box-shadow:0 0 0 2px var(--coral) inset;animation:spin 3.2s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-h1{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.05;margin:0}
-h1 em{font-style:normal;background:var(--stage);-webkit-background-clip:text;background-clip:text;color:transparent}
-p{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
-button{font:inherit;cursor:pointer;border:0;padding:15px 22px;border-radius:16px;background:var(--stage);color:#1d0b12;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:700;font-size:15px}
-.off .disc{animation:none;filter:grayscale(.7);opacity:.6}
+.demo-tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:5px 10px}
+
+.seg{display:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:relative}
+.seg button{position:relative;z-index:1;padding:9px 14px;border-radius:10px;font-weight:700;font-size:14px;color:var(--muted);transition:color .25s}
+.seg button[aria-selected="true"]{color:#1a0d14}
+.seg .knob{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 6px);border-radius:10px;background:var(--stage);transition:transform .35s cubic-bezier(.6,.2,.2,1.2)}
+.seg.right .knob{transform:translateX(calc(100% + 4px))}
+.seg .ping{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 0 var(--mint);animation:ping 1.4s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+.stage{padding-top:6px}
+.stage:not([data-view="guest"]) .col-guest,.stage:not([data-view="login"]) .col-login,.stage:not([data-view="dj"]) .col-dj{display:none}
+.col-guest{max-width:460px;margin:0 auto;animation:rise .4s ease}
+.col-dj{max-width:1000px;margin:0 auto;animation:rise .4s ease}
+.logo{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:default}
+.logo.holding .disc{animation-duration:.5s}
+
+/* login */
+.login{max-width:380px;margin:40px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:26px 22px;display:flex;flex-direction:column;gap:12px;animation:rise .4s ease}
+.login h2{font-family:var(--f-display);font-size:22px;margin:4px 0 0}
+.login p{margin:0;color:var(--muted);font-size:14px}
+.lock{width:52px;height:52px;border-radius:16px;background:var(--stage);color:#1d0b12;display:grid;place-items:center}
+.pin{font-family:var(--f-mono);font-size:24px;letter-spacing:.5em;text-align:center}
+.err{color:var(--coral)!important;font-size:13px!important}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+.min-lbl{font-size:12.5px;color:var(--muted);font-weight:600}
+
+/* amount picker */
+.amts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.3fr);gap:6px}
+.amt{position:relative;padding:12px 0;border-radius:13px;border:1.5px solid var(--line-2);font-family:var(--f-mono);font-weight:700;font-size:14px;transition:transform .15s,border-color .2s,background .2s,color .2s}
+.amt:active{transform:scale(.93)}
+.amt[aria-pressed="true"]{background:var(--stage);border-color:transparent;color:#1d0b12;box-shadow:0 8px 20px -10px rgba(255,79,109,.8)}
+.amt-own{display:flex;align-items:center;border-radius:13px;border:1.5px solid var(--line-2);padding:0 10px;gap:4px;transition:border-color .2s;min-width:0}
+.amt-own:focus-within,.amt-own.on{border-color:var(--amber)}
+.amt-own input{width:100%;min-width:0;background:none;border:0;outline:0;font-family:var(--f-mono);font-weight:700;font-size:14px;padding:12px 0}
+.amt-own input::placeholder{color:var(--dim);font-family:var(--f-body);font-weight:600}
+.amt-own span{color:var(--muted);font-family:var(--f-mono);font-size:13px}
+.amt-hint{margin:8px 0 0 2px;font-size:12.5px;color:var(--muted);min-height:18px;transition:color .2s}
+.amt-hint.warn{color:var(--coral)}
+.amt-hint.hot{color:var(--amber)}
+.cta .sum-n{display:inline-block}
+.cta .sum-n.bump{animation:bump .4s ease}
+.tipchip{font-family:var(--f-mono);font-size:10.5px;font-weight:700;color:#1d0b12;background:var(--amber);padding:2px 7px;border-radius:99px}
+.req.big{border-color:rgba(255,178,62,.45);background:linear-gradient(120deg,rgba(255,178,62,.1),var(--panel-2) 55%)}
+.req .money.big{font-size:14px}
+
+/* ============ GUEST ============ */
+.phone{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:30px;overflow:hidden;min-height:760px;box-shadow:0 30px 80px -30px rgba(255,79,109,.35)}
+.phone-in{padding:20px 18px 26px;display:flex;flex-direction:column;gap:18px}
+
+.np{position:relative;display:flex;gap:14px;align-items:center;padding:14px;border-radius:22px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+.np::after{content:"";position:absolute;inset:auto -20% -60% 30%;height:120%;background:radial-gradient(closest-side,rgba(255,79,109,.28),transparent);pointer-events:none}
+.vinyl{flex:none;width:64px;height:64px;border-radius:50%;position:relative;
+  background:repeating-radial-gradient(circle,#120c1d 0 2px,#1c1430 2px 3px);box-shadow:0 0 0 1px var(--line-2),0 8px 24px -6px #000;animation:spin 4s linear infinite}
+.vinyl::after{content:"";position:absolute;inset:24px;border-radius:50%;background:var(--stage);box-shadow:0 0 0 3px #120c1d}
+.np-meta{min-width:0;flex:1;position:relative;z-index:1}
+.eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.np-title{font-weight:800;font-size:16px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-artist{color:var(--muted);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq{display:flex;gap:3px;align-items:flex-end;height:22px;flex:none;position:relative;z-index:1}
+.eq span{width:4px;border-radius:2px;background:var(--stage);animation:eq 1s ease-in-out infinite}
+.eq span:nth-child(1){animation-delay:-.2s}.eq span:nth-child(2){animation-delay:-.55s}.eq span:nth-child(3){animation-delay:-.1s}.eq span:nth-child(4){animation-delay:-.75s}
+@keyframes eq{0%,100%{height:20%}50%{height:100%}}
+
+.hero h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,8vw,38px);line-height:1.02;letter-spacing:-.01em;margin:6px 0 8px;text-wrap:balance}
+.hero h1 em{font-style:normal;background:var(--stage);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:0;color:var(--muted);font-size:14.5px}
+
+.search{position:relative}
+.field{display:flex;align-items:center;gap:10px;background:var(--ink);border:1.5px solid var(--line-2);border-radius:16px;padding:0 14px;transition:border-color .2s,box-shadow .2s}
+.field:focus-within{border-color:var(--coral);box-shadow:0 0 0 4px rgba(255,79,109,.16)}
+.field svg{flex:none;color:var(--muted)}
+.field input{flex:1;min-width:0;background:none;border:0;outline:0;padding:15px 0;font-size:16px;font-weight:600}
+.field input::placeholder{color:var(--dim);font-weight:500}
+.clear{color:var(--dim);padding:6px;border-radius:8px}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:6;background:var(--panel-3);border:1px solid var(--line-2);border-radius:18px;padding:6px;box-shadow:0 24px 60px -12px rgba(0,0,0,.7);transform-origin:top;animation:pop .22s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(-6px)}}
+.s-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 10px;border-radius:13px;opacity:0;animation:rise .28s ease forwards}
+.s-item[aria-selected="true"],.s-item:hover{background:rgba(255,255,255,.06)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.art{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:15px;color:rgba(255,255,255,.92);text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.s-text{min-width:0;flex:1}
+.s-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-artist{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+mark{background:none;color:var(--amber);font-weight:800}
+.chip{flex:none;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:99px;padding:3px 8px}
+.s-custom{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px;border-top:1px solid var(--line);margin-top:4px;color:var(--muted);font-size:13.5px;border-radius:0 0 13px 13px}
+.s-custom:hover{color:var(--text)}
+.s-empty{padding:14px;color:var(--muted);font-size:14px}
+
+.pick{display:flex;gap:12px;align-items:center;padding:12px;border-radius:18px;background:linear-gradient(var(--panel-2),var(--panel-2)) padding-box,var(--stage) border-box;border:1.5px solid transparent;animation:rise .35s ease}
+.pick .art{width:52px;height:52px;border-radius:14px;font-size:18px}
+.pick .s-title{font-size:16px}
+.pick .x{margin-left:auto;color:var(--muted);padding:8px;border-radius:10px}
+
+.inputs{display:grid;grid-template-columns:1fr;gap:10px}
+.inp{background:var(--ink);border:1.5px solid var(--line-2);border-radius:14px;padding:12px 14px;outline:0;width:100%;font-size:15px;transition:border-color .2s}
+.inp:focus{border-color:var(--amber)}
+.inp::placeholder{color:var(--dim)}
+.lbl{font-size:12.5px;color:var(--muted);font-weight:600;margin:0 0 6px 2px;display:flex;justify-content:space-between}
+.lbl span{font-family:var(--f-mono);font-weight:500;color:var(--dim)}
+
+.cta{position:relative;width:100%;padding:17px 18px;border-radius:18px;background:var(--stage);color:#1d0b12;font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;transition:transform .15s,filter .2s,opacity .2s;box-shadow:0 12px 30px -10px rgba(255,79,109,.7)}
+.cta:active{transform:scale(.97)}
+.cta:disabled{filter:grayscale(.85) brightness(.6);box-shadow:none;cursor:not-allowed}
+.cta::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-100%);animation:shine 3.2s ease-in-out infinite}
+.cta:disabled::after{display:none}
+@keyframes shine{60%,100%{transform:translateX(100%)}}
+.fine{font-size:12.5px;color:var(--dim);text-align:center;margin-top:-8px}
+
+.paused{padding:22px 18px;border-radius:20px;border:1.5px dashed var(--line-2);text-align:center;color:var(--muted)}
+.paused strong{display:block;color:var(--text);font-family:var(--f-display);font-size:17px;margin-bottom:4px}
+
+.my h3{font-family:var(--f-display);font-size:15px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.count{font-family:var(--f-mono);font-size:11px;background:var(--panel-3);color:var(--muted);border-radius:99px;padding:2px 8px}
+.mylist{display:flex;flex-direction:column;gap:10px}
+.mycard{display:flex;gap:12px;align-items:center;padding:12px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line);animation:rise .4s ease;transition:border-color .4s,background .4s}
+.mycard .s-text{min-width:0}
+.mycard.st-playing{border-color:var(--coral);background:linear-gradient(120deg,rgba(255,79,109,.16),var(--panel-2) 60%)}
+.mycard.st-queued{border-color:rgba(56,232,194,.4)}
+.mycard.st-rejected{opacity:.62}
+.status{margin-top:5px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:99px;padding:3px 9px 3px 7px}
+.status i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.st-pending .status{color:var(--amber);background:rgba(255,178,62,.12)}
+.st-pending .status i{animation:blink 1s infinite}
+.st-queued .status{color:var(--mint);background:rgba(56,232,194,.12)}
+.st-playing .status{color:var(--coral);background:rgba(255,79,109,.15)}
+.st-played .status{color:var(--sky);background:rgba(111,184,255,.12)}
+.st-rejected .status{color:var(--muted);background:rgba(255,255,255,.06)}
+.empty-my{padding:16px;border-radius:16px;border:1px dashed var(--line-2);color:var(--dim);font-size:13.5px;text-align:center}
+
+/* pay sheet */
+.scrim{position:absolute;inset:0;z-index:20;background:rgba(8,5,14,.62);backdrop-filter:blur(4px);animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--panel-3);border-radius:28px 28px 0 0;border-top:1px solid var(--line-2);padding:10px 20px calc(24px + env(safe-area-inset-bottom,0px));animation:up .42s cubic-bezier(.2,.9,.25,1.1)}
+@keyframes up{from{transform:translateY(100%)}}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line-2);margin:0 auto 16px}
+.sheet h4{font-family:var(--f-display);font-size:18px;margin:0 0 14px}
+.sum{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-block:1px solid var(--line);margin-bottom:14px}
+.sum .big{font-family:var(--f-display);font-weight:800;font-size:34px}
+.sum .big small{font-size:18px;color:var(--muted);margin-left:2px}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.method{padding:12px;border-radius:14px;border:1.5px solid var(--line-2);text-align:left;font-weight:700;font-size:14px;transition:border-color .2s,background .2s}
+.method small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.method[aria-pressed="true"]{border-color:var(--amber);background:rgba(255,178,62,.08)}
+.hold{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);background:rgba(56,232,194,.07);border:1px solid rgba(56,232,194,.22);border-radius:14px;padding:10px 12px;margin-bottom:16px}
+.hold svg{flex:none;color:var(--mint);margin-top:1px}
+.spin{width:54px;height:54px;border-radius:50%;border:4px solid var(--line-2);border-top-color:var(--coral);border-right-color:var(--amber);animation:spin .8s linear infinite;margin:18px auto 14px}
+.done{text-align:center;padding:8px 0 4px}
+.check{width:76px;height:76px;margin:6px auto 12px;border-radius:50%;background:var(--stage);display:grid;place-items:center;animation:boom .5s cubic-bezier(.2,.9,.3,1.6)}
+@keyframes boom{from{transform:scale(.2);opacity:0}}
+.check svg path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .25s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.center-txt{text-align:center;color:var(--muted);font-size:14px;margin:0 0 16px}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:25;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 1.6s cubic-bezier(.3,.6,.4,1) forwards}
+@keyframes fall{to{transform:translateY(820px) rotate(720deg);opacity:0}}
+
+.toast{position:absolute;left:14px;right:14px;top:14px;z-index:30;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:rgba(44,33,70,.96);border:1px solid var(--line-2);box-shadow:0 18px 40px -10px #000;animation:drop .45s cubic-bezier(.2,.9,.3,1.3)}
+.toast.out{animation:lift .35s ease forwards}
+@keyframes drop{from{transform:translateY(-130%)}}
+@keyframes lift{to{transform:translateY(-140%);opacity:0}}
+.toast .ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800}
+.toast b{display:block;font-size:14px}
+.toast span{font-size:12.5px;color:var(--muted)}
+
+/* ============ DJ CONSOLE ============ */
+.console{background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.c-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;align-items:center}
+.c-head h2{font-family:var(--f-display);font-size:22px;margin:0;font-weight:800}
+.c-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.switch{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line);font-weight:700;font-size:13.5px}
+.track-sw{width:44px;height:26px;border-radius:99px;background:var(--panel-3);position:relative;transition:background .25s;flex:none}
+.track-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .3s cubic-bezier(.5,.2,.2,1.4),background .25s}
+.switch[aria-checked="true"] .track-sw{background:rgba(56,232,194,.25)}
+.switch[aria-checked="true"] .track-sw::after{transform:translateX(18px);background:var(--mint)}
+.prices{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line)}
+.prices button{padding:6px 11px;border-radius:10px;font-family:var(--f-mono);font-weight:700;font-size:13px;color:var(--muted)}
+.prices button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)}
+.icon-btn[aria-pressed="true"]{color:var(--amber)}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{padding:14px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line);min-width:0}
+.stat .k{font-size:12px;color:var(--muted);font-weight:600}
+.stat .v{font-family:var(--f-display);font-weight:800;font-size:26px;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:15px;color:var(--muted)}
+.stat.money{background:linear-gradient(140deg,rgba(255,79,109,.2),rgba(255,178,62,.12));border-color:rgba(255,140,80,.35)}
+.bump{animation:bump .5s ease}
+@keyframes bump{40%{transform:scale(1.12);color:var(--amber)}}
+
+.on-air{display:flex;gap:14px;align-items:center;padding:14px;border-radius:18px;background:var(--ink);border:1px solid var(--line)}
+.on-air .vinyl{width:52px;height:52px}
+.on-air .vinyl::after{inset:19px}
+.on-air .np-meta{flex:1}
+.ghost{padding:9px 13px;border-radius:12px;border:1px solid var(--line-2);font-weight:700;font-size:13px;color:var(--text);white-space:nowrap}
+.ghost:hover{background:rgba(255,255,255,.05)}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);padding-bottom:2px}
+.tabs button{flex:none;position:relative;padding:10px 12px 12px;font-weight:700;font-size:14px;color:var(--muted);display:flex;gap:7px;align-items:center}
+.tabs button[aria-selected="true"]{color:var(--text)}
+.tabs button[aria-selected="true"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-3px;height:3px;border-radius:3px;background:var(--stage)}
+.tabs .n{font-family:var(--f-mono);font-size:11px;background:var(--panel-3);border-radius:99px;padding:1px 7px}
+.tabs .n.hot{background:var(--coral);color:#fff}
+
+.reqs{display:flex;flex-direction:column;gap:10px;min-height:120px}
+.req{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line);animation:slidein .45s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes slidein{from{opacity:0;transform:translateX(24px)}}
+.req.leave{animation:leave .3s ease forwards}
+@keyframes leave{to{opacity:0;transform:translateX(-24px) scale(.97)}}
+.req.fresh{box-shadow:0 0 0 1.5px var(--amber),0 0 30px -6px rgba(255,178,62,.5)}
+.req .meta{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:4px;font-size:12.5px;color:var(--muted)}
+.req .who{color:var(--text);font-weight:700}
+.req .msg{margin-top:6px;font-size:13px;color:var(--text);background:rgba(255,255,255,.04);border-radius:10px;padding:6px 10px;display:inline-block;max-width:100%;overflow-wrap:anywhere}
+.req .money{font-family:var(--f-mono);font-weight:700;color:var(--amber)}
+.req .you{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--mint);padding:2px 7px;border-radius:99px}
+.acts{display:flex;gap:8px;align-items:center}
+.btn{height:42px;padding:0 14px;border-radius:13px;font-weight:800;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;transition:transform .12s}
+.btn:active{transform:scale(.94)}
+.btn.ok{background:var(--mint);color:#062a22}
+.btn.no{background:rgba(255,255,255,.07);color:var(--text);width:42px;padding:0;justify-content:center}
+.btn.no:hover{background:rgba(255,79,109,.2);color:var(--coral)}
+.btn.play{background:var(--stage);color:#1d0b12}
+.btn.sm{width:34px;height:34px;padding:0;justify-content:center;background:rgba(255,255,255,.05);color:var(--muted);border-radius:10px}
+.qn{font-family:var(--f-display);font-weight:800;font-size:18px;color:var(--dim);width:26px;text-align:center}
+.zero{padding:34px 16px;text-align:center;color:var(--dim);border:1.5px dashed var(--line);border-radius:18px;font-size:14px}
+.zero strong{display:block;color:var(--muted);font-size:15px;margin-bottom:2px}
+.note{font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:14px}
+
+/* responsive */
+.phone{min-height:0}
+@media (max-width:920px){
+  .console{padding:16px}
+}
+@media (max-width:420px){
+  .amts{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .amt-own{grid-column:1/-1}
+  .demo-tag{display:none}
+}
+@media (max-width:620px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .req{grid-template-columns:auto minmax(0,1fr)}
+  .req .acts{grid-column:1/-1;justify-content:flex-end}
+  .phone{border:0;background:transparent;box-shadow:none;overflow:visible}
+  .phone-in{padding:6px 0 20px}
+  .scrim,.sheet,.toast,.confetti{position:fixed}
+  .toast{top:calc(64px + env(safe-area-inset-top,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .vinyl,.logo .disc,.lights i{animation:none!important}
+}
+
+/* covers */
+.art{position:relative;overflow:hidden;background:var(--panel-3)}
+.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none}
+.art b{font:inherit}
+.check-ok{width:76px;height:76px;margin:6px auto 12px;border-radius:50%;background:var(--stage);display:grid;place-items:center;animation:boom .5s cubic-bezier(.2,.9,.3,1.6)}
+.check-ok svg path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .25s ease forwards}
+.s-skel{display:flex;gap:12px;align-items:center;padding:9px 10px}
+.s-skel span{width:42px;height:42px;border-radius:11px;flex:none}
+.s-skel div{flex:1;display:grid;gap:7px}
+.s-skel i{display:block;height:11px;border-radius:6px;width:70%}
+.s-skel i+i{width:45%}
+.s-skel span,.s-skel i{background:linear-gradient(90deg,var(--panel-2) 25%,var(--panel) 50%,var(--panel-2) 75%);background-size:300% 100%;animation:skel 1.1s linear infinite}
+@keyframes skel{to{background-position:-150% 0}}
+a.ghost{text-decoration:none;flex:none}
+.err{color:var(--coral);font-size:13px}
+</style>
+<style>
+/* guest fixes */
+.top{position:relative;top:auto;background:none;justify-content:center;padding-block:14px 0}
+.logo{font-size:24px}
+.logo .disc{width:34px;height:34px}
+
+/* bigger, livelier hero */
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero h1{font-size:clamp(42px,12.5vw,58px);line-height:.98;margin:2px 0 0}
+.hero h1 .w{display:inline-block;animation:wordIn .7s cubic-bezier(.2,.9,.25,1.15) both}
+.hero h1 .w:nth-child(2){animation-delay:.08s}.hero h1 .w:nth-child(3){animation-delay:.16s}
+@keyframes wordIn{from{opacity:0;transform:translateY(40%) rotate(4deg)}}
+.hero h1 em{background-size:200% 100%;animation:sheen 5s ease-in-out infinite alternate}
+@keyframes sheen{to{background-position:100% 0}}
+.hero p{font-size:16.5px;line-height:1.5}
+.eyebrow{font-size:12px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:56px;margin-bottom:2px}
+.bars span{flex:1;height:100%;border-radius:4px 4px 2px 2px;background:var(--stage);opacity:.85;transform-origin:bottom;animation:bar 1.2s ease-in-out infinite}
+@keyframes bar{0%,100%{transform:scaleY(.18)}50%{transform:scaleY(1)}}
+
+.field input{font-size:17px;padding:18px 0}
+.field{border-radius:18px;animation:glow 3s ease-in-out infinite}
+.field:focus-within{animation:none}
+@keyframes glow{50%{border-color:rgba(255,120,90,.5);box-shadow:0 0 0 4px rgba(255,79,109,.08)}}
+.own-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:13px;border-radius:16px;border:1.5px dashed var(--line-2);color:var(--muted);font-weight:700;font-size:14.5px;transition:border-color .2s,color .2s,background .2s}
+.own-btn:hover,.own-btn:focus-visible{border-color:var(--amber);color:var(--text);background:rgba(255,178,62,.06)}
+
+.pop h3{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:500}
+.pop-row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px max(16px,env(safe-area-inset-left,0px)) 6px;scroll-snap-type:x mandatory}
+.pop-row::-webkit-scrollbar{display:none}
+.pop-card{flex:none;width:128px;scroll-snap-align:start;text-align:left;padding:10px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line);opacity:0;animation:rise .45s ease forwards;transition:transform .2s,border-color .2s}
+.pop-card:hover,.pop-card:focus-visible{transform:translateY(-3px);border-color:var(--coral)}
+.pop-card .art{width:100%;height:auto;aspect-ratio:1;border-radius:13px;font-size:30px;margin-bottom:8px;max-width:100%}
+.pop-card .s-title{font-size:13.5px}
+.pop-card .s-artist{font-size:12px}
+
+.ticker{overflow:hidden;border-block:1px solid var(--line);padding-block:10px;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.ticker-in{display:flex;gap:28px;width:max-content;animation:tick 32s linear infinite;font-family:var(--f-display);font-weight:700;font-size:14px;color:var(--muted);white-space:nowrap}
+.ticker-in span::before{content:"✦";color:var(--amber);margin-right:28px}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+.own-form{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;background:var(--panel-2);border:1.5px solid var(--line-2);animation:rise .35s ease}
+.own-form h3{margin:0;font-family:var(--f-display);font-size:17px}
+.own-form p{margin:-6px 0 2px;color:var(--muted);font-size:13.5px}
+.own-actions{display:flex;gap:10px}
+.own-actions .cta{flex:1}
+.back{padding:0 16px;border-radius:16px;border:1.5px solid var(--line-2);font-weight:700;color:var(--muted)}
+.g-screen{max-width:460px;margin:0 auto;animation:rise .4s ease}
+
+.g-main{display:flex;flex-direction:column;gap:18px}
+.demo-note{margin:0;text-align:center;font-size:12px;color:var(--dim)}
+.more{align-self:center;margin-top:2px;padding:8px 14px;border-radius:12px;color:var(--muted);font-weight:700;font-size:13px}
+.more:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.mylist .mycard{padding:10px 12px}
+.mylist .art{width:38px;height:38px;border-radius:10px;font-size:14px}
+
+/* sheet: close by X, drag, scrim tap or Esc */
+.sheet{max-height:90svh;overflow-y:auto;overscroll-behavior:contain;padding-top:0;transition:transform .3s cubic-bezier(.3,.7,.3,1)}
+.sheet.closing{transform:translateY(105%)}
+.scrim{transition:opacity .3s}
+.scrim.closing{opacity:0}
+.sheet-head{position:sticky;top:0;z-index:2;background:var(--panel-3);margin:0 -20px;padding:10px 20px 12px;touch-action:none;cursor:grab;display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 12px}
+.sheet-head .grab{grid-column:1/-1;justify-self:center;margin:0 0 4px;width:48px;height:6px}
+.sheet-head h4{margin:0;flex:1}
+.sh-x{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.07);display:grid;place-items:center;color:var(--text);flex:none;cursor:pointer}
+.sh-x:hover{background:rgba(255,255,255,.12)}
+.cardnum{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:16px;background:var(--ink);border:1.5px solid var(--line-2);margin-bottom:10px;flex-wrap:wrap}
+.cardnum .lbl2{font-size:12px;color:var(--muted);font-weight:600;flex-basis:100%;margin-bottom:-4px}
+.cardnum b{font-family:var(--f-mono);font-size:clamp(16px,5vw,19px);letter-spacing:.06em;user-select:all;-webkit-user-select:all}
+.copy{padding:9px 13px;border-radius:12px;background:var(--text);color:var(--ink);font-weight:800;font-size:13px;transition:background .2s,transform .12s}
+.copy:active{transform:scale(.94)}
+.copy.ok{background:var(--mint)}
+.steps{margin:0 0 16px;padding:0 0 0 20px;color:var(--muted);font-size:13.5px;display:grid;gap:4px}
+.steps b{color:var(--text)}
+
+.pop-card .art{display:block}
+.pop-card .art b{position:absolute;inset:0;display:grid;place-items:center}
+
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+.sbp-go{text-decoration:none;margin-bottom:12px}
+.cta-2{background:var(--panel-2);color:var(--text);border:1.5px solid var(--line-2);box-shadow:none}
+.cta-2::after{display:none}
+.why{display:block;margin-top:5px;font-size:12.5px;color:var(--muted)}
+.mycard{position:relative;transition:opacity .3s,transform .3s,max-height .3s}
+.mycard.gone{opacity:0;transform:translateX(40px) scale(.96)}
+.del{flex:none;align-self:center;min-width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.06);color:var(--muted);transition:background .2s,color .2s}
+.del:hover{background:rgba(255,79,109,.18);color:var(--coral)}
+.del.armed{background:var(--coral);color:#fff;font-weight:800;font-size:12px;padding:0 10px;max-width:150px;line-height:1.2;text-align:center;height:auto;min-height:38px;padding-block:6px}
+.clear-done{margin-left:auto;font-family:var(--f-body);font-size:12.5px;font-weight:700;color:var(--muted);padding:6px 10px;border-radius:10px}
+.clear-done:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.my h3{display:flex;align-items:center;gap:8px}
+.reviews h3{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:6px 0 10px;font-weight:500}
+.rv-track{overflow:hidden;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.rv-row{display:flex;gap:12px;width:max-content;padding:4px max(16px,env(safe-area-inset-left,0px));animation:rvScroll var(--dur,40s) linear infinite}
+.rv-track:hover .rv-row,.rv-track:active .rv-row{animation-play-state:paused}
+@keyframes rvScroll{to{transform:translateX(-50%)}}
+.rv{margin:0;width:250px;flex:none;padding:14px 15px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.rv blockquote{margin:0;font-size:14px;line-height:1.45;color:var(--text);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.rv figcaption{font-size:12.5px;color:var(--muted);font-weight:700}
+.rv-stars{color:var(--amber);letter-spacing:2px;font-size:14px}
+.rv-stars span{color:var(--line-2)}
+@media (prefers-reduced-motion:reduce){.rv-track{overflow-x:auto}.rv-row{animation:none}}
+.rv-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 10px}
+.rv-head h3{margin:0}
+.rv-add{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:12px;background:rgba(255,178,62,.12);border:1px solid rgba(255,178,62,.35);color:var(--amber);font-weight:800;font-size:13px;transition:background .2s,transform .12s}
+.rv-add:hover{background:rgba(255,178,62,.2)}.rv-add:active{transform:scale(.95)}
+.rv-add span{font-size:15px;animation:twinkle 2.4s ease-in-out infinite}
+@keyframes twinkle{50%{transform:scale(1.25) rotate(15deg)}}
+.rv-empty{width:100%;padding:16px;border-radius:18px;border:1.5px dashed var(--line-2);color:var(--muted);font-weight:600;font-size:14px;text-align:center}
+.rv-empty:hover{color:var(--text);border-color:var(--amber)}
+.rv-tags{display:flex;flex-wrap:wrap;gap:5px}
+.rv-tags span{font-size:11px;font-weight:700;color:var(--amber);background:rgba(255,178,62,.1);border-radius:99px;padding:3px 8px}
+.rvf{display:flex;flex-direction:column;gap:14px}
+.rvf textarea.inp{resize:vertical;min-height:76px;font:inherit}
+.stars-pick{display:flex;justify-content:center;gap:6px;margin-top:2px}
+.star{font-size:44px;line-height:1;color:var(--line-2);padding:2px 4px;transition:color .15s,transform .15s;-webkit-tap-highlight-color:transparent}
+.star.on{color:var(--amber);text-shadow:0 0 18px rgba(255,178,62,.55)}
+.star.hov{transform:translateY(-3px)}
+.star.pop{animation:starPop .45s cubic-bezier(.2,.9,.3,1.6)}
+@keyframes starPop{0%{transform:scale(.6)}60%{transform:scale(1.35) rotate(-8deg)}100%{transform:scale(1)}}
+.star-word{margin:-8px 0 0;text-align:center;font-family:var(--f-display);font-weight:700;font-size:15px;color:var(--muted);min-height:20px}
+.star-word.s5{background:var(--stage);-webkit-background-clip:text;background-clip:text;color:transparent}
+.star-word.s4{color:var(--amber)}.star-word.s1,.star-word.s2{color:var(--coral)}
+.tag-pick{display:flex;flex-wrap:wrap;gap:7px}
+.tag{padding:8px 12px;border-radius:99px;border:1.5px solid var(--line-2);font-weight:700;font-size:13px;color:var(--muted);transition:all .15s}
+.tag[aria-pressed="true"]{background:var(--stage);border-color:transparent;color:#1d0b12;transform:scale(1.03)}
+.rv-track.still{overflow-x:auto;scrollbar-width:none;-webkit-mask-image:none;mask-image:none}
+.rv-track.still .rv-row{animation:none}
 </style>
 </head>
 <body>
-<div class="glow" aria-hidden="true"><i></i><i></i></div>
-<main id="box">
-  <div class="disc" aria-hidden="true"></div>
-  <h1>Закажи <em>свой трек</em></h1>
-  <p id="msg">Подключаемся к диджею…</p>
-  <button id="retry" hidden>Попробовать снова</button>
-  <small id="diag" style="color:rgba(168,155,194,.55);font-size:11px;min-height:14px"></small>
-</main>
-<script>
-// Постоянная страница для QR-кода. Ноутбук диджея при запуске пишет свою текущую ссылку в current.json этого репозитория,
-// а эта страница находит её и перекидывает гостя.
+<div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="wrap">
+  <header class="top"><div class="logo"><span class="disc" aria-hidden="true"></span><span>ДР<b>О</b>П</span></div></header>
+  <main class="g-screen">
+    <div class="phone" id="phone">
+      <div class="phone-in">
+        <div class="g-main">
+          <div class="hero">
+            <div class="bars" id="bars" aria-hidden="true"></div>
+            <div class="eyebrow"><span class="live-dot"></span><span id="djName">DJ</span> · <span id="eyebrowState">заказы открыты</span></div>
+            <h1><span class="w">Закажи</span> <em class="w">свой</em> <em class="w">трек</em></h1>
+            <p>Найди песню или впиши свою. Диджей увидит заказ сразу.</p>
+          </div>
+          <div id="orderArea"></div>
+          <section class="reviews" id="reviewsBox" hidden></section>
+        </div>
+        <div class="my" id="mySec" hidden>
+          <h3>Мои заказы <span class="count" id="myCount">0</span><button class="clear-done" id="clearDone" hidden>Убрать завершённые</button></h3>
+          <div class="mylist" id="myList"></div>
+          <div style="display:flex"><button class="more" id="moreBtn" hidden></button></div>
+        </div>
+      </div>
+      <div id="overlay"></div>
+    </div>
+  </main>
+</div>
+<script>window.DROP_API='https://functions.yandexcloud.net/d4ef5hk3udtqk2h9fh0c';</script>
+<script>"use strict";
+// Прослойка: страницы написаны под локальный сервер (/api/...), здесь эти запросы
+// переводятся в вызовы облачной функции Yandex Cloud: https://functions.yandexcloud.net/<id>?r=...
 (function () {
-  var owner = location.hostname.split(".")[0];
-  var repo = location.pathname.split("/").filter(Boolean)[0] || (owner + ".github.io");
-  var SAFE = /^https:\/\/[a-z0-9-]+\.(lhr\.life|lhrtunnel\.link|trycloudflare\.com)$/;
-  var msg = document.getElementById("msg"), retry = document.getElementById("retry"), box = document.getElementById("box"), diag = document.getElementById("diag");
-  var log = [];
-  function note(t) { log.push(t); }
-  function withTimeout(p, ms) { return Promise.race([p, new Promise(function (_, no) { setTimeout(function () { no(new Error("timeout")); }, ms); })]); }
-  function sources() {
-    var t = Date.now();
-    return [
-      ["api", "https://api.github.com/repos/" + owner + "/" + repo + "/contents/current.json?ref=main&t=" + t],
-      ["raw", "https://raw.githubusercontent.com/" + owner + "/" + repo + "/main/current.json?t=" + t],
-      ["pages", "current.json?t=" + t]
-    ];
+  const API = window.DROP_API;
+  const KEY = "drop-admin-k";
+  const getK = () => { try { return localStorage.getItem(KEY) || ""; } catch { return ""; } };
+  const setK = (v) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch {} };
+  let lastAdmin = null; // последний ответ r=admin: ключи заказов и отзывы
+  const idToKey = new Map();
+
+  async function call(r, { query = {}, body = null, admin = false } = {}) {
+    const qs = new URLSearchParams({ r, ...query });
+    if (admin) qs.set("k", getK());
+    const opts = body ? { method: "POST", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(body) } : { method: "GET" };
+    const res = await fetch(API + "?" + qs.toString(), { ...opts, cache: "no-store" });
+    const data = await res.json().catch(() => null);
+    if (!data) throw new TypeError("bad response");
+    return { status: res.status, data };
   }
-  function load(src) {
-    var api = src[0] === "api";
-    return withTimeout(fetch(src[1], { cache: "no-store", headers: api ? { Accept: "application/vnd.github.raw+json" } : {} }), 7000)
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-      .then(function (t) { return JSON.parse(t); });
+  const resp = (status, data) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
+  const changed = () => window.dispatchEvent(new Event("cloud-changed"));
+  function adminShape(d) {
+    lastAdmin = d;
+    d.orders.forEach((o) => idToKey.set(String(o.id), o.key));
+    return { ...d, publicUrl: d.siteUrl || location.href.replace(/admin\.html.*$/, ""), qrUrl: d.siteUrl || location.href.replace(/admin\.html.*$/, ""), gh: "ok", tunnel: "on", lan: [] };
   }
-  function offline(text) {
-    box.classList.add("off"); msg.textContent = text; retry.hidden = false;
-    diag.textContent = log.join(" · ");
-  }
-  function go() {
-    log = []; diag.textContent = "";
-    box.classList.remove("off"); retry.hidden = true; msg.textContent = "Подключаемся к диджею…";
-    // все источники спрашиваем одновременно: первый свежий ответ «в эфире» сразу перекидывает
-    var list = sources(), left = list.length, best = null, done = false;
-    list.forEach(function (src) {
-      load(src).then(function (d) {
-        note(src[0] + ": " + (d && d.online ? "в эфире" : "не в эфире"));
-        if (d && (!best || String(d.updated) > String(best.updated))) best = d;
-        if (src[0] === "api" || (best && best.online && SAFE.test(best.url || ""))) finish();
-      }, function (e) { note(src[0] + ": " + e.message); }).then(function () { if (--left === 0) finish(); });
-    });
-    function finish() { if (done) return; done = true; decide(); }
-    function decide() {
-      if (!best) return offline("Не получилось связаться. Проверь интернет и попробуй ещё раз.");
-      if (!best.online) return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка.");
-      if (!SAFE.test(best.url || "")) { note("неверная ссылка"); return offline("Диджей сейчас не в эфире. Загляни, когда начнётся вечеринка."); }
-      msg.textContent = "Открываем заказ трека…";
-      location.replace(best.url + "/");
+
+  window.cloudFetch = async function (path, opts = {}) {
+    const u = new URL(path, location.origin);
+    const p = u.pathname, method = (opts.method || "GET").toUpperCase();
+    let body = null; if (opts.body) { try { body = JSON.parse(opts.body); } catch { body = {}; } }
+    let m;
+    // ----- гость
+    if (p === "/api/boot" || p === "/api/config") { const r = await call("boot"); return resp(r.status, p === "/api/config" ? r.data.cfg : r.data); }
+    if (p === "/api/popular") { const r = await call("boot"); return resp(r.status, { results: r.data.popular || [] }); }
+    if (p === "/api/search") { const r = await call("search", { query: { q: u.searchParams.get("q") || "" } }); return resp(r.status, r.data); }
+    if (p === "/api/orders" && method === "POST") { const r = await call("order", { body }); return resp(r.status, r.data); }
+    if (p === "/api/orders/mine") { const r = await call("mine", { query: { t: u.searchParams.get("t") || "" } }); return resp(r.status, r.data); }
+    if (p === "/api/reviews" && method === "POST") { const r = await call("review", { body }); return resp(r.status, r.data); }
+    // ----- пульт
+    if (p === "/api/admin/login") { const r = await call("login", { body }); if (r.data.k) setK(r.data.k); return resp(r.status, r.data); }
+    if (p === "/api/admin/logout") { setK(""); return resp(200, { ok: true }); }
+    if (p === "/api/admin/me") {
+      if (!getK()) return resp(200, { admin: false });
+      const r = await call("ver", { admin: true }); return resp(200, { admin: r.status === 200 });
+    }
+    if (p === "/api/admin/ver") { const r = await call("ver", { admin: true }); return resp(r.status, r.data); }
+    if (p === "/api/admin/orders") { const r = await call("admin", { admin: true }); return resp(r.status, r.status === 200 ? adminShape(r.data) : r.data); }
+    if (p === "/api/admin/reviews") {
+      if (!lastAdmin) { const r = await call("admin", { admin: true }); if (r.status !== 200) return resp(r.status, r.data); adminShape(r.data); }
+      return resp(200, { reviews: lastAdmin.reviews || [] });
+    }
+    if (p === "/api/admin/settings") { const r = await call("settings", { admin: true, body }); changed(); return resp(r.status, r.data); }
+    if (p === "/api/admin/clear") { const r = await call("clear", { admin: true, body }); changed(); return resp(r.status, r.data); }
+    if (p === "/api/admin/shift/reset") {
+      const r = await call("shift", { admin: true, body: {} }); if (r.status !== 200) return resp(r.status, r.data);
+      const a = await call("admin", { admin: true }); adminShape(a.data); changed(); return resp(200, a.data.stats);
+    }
+    if (p === "/api/admin/tg-test") { const r = await call("tgtest", { admin: true, body: {} }); return resp(r.status, r.data); }
+    if ((m = p.match(/^\/api\/admin\/orders\/(\d+)\/([a-z]+)$/))) {
+      const key = idToKey.get(m[1]); if (!key) return resp(404, { error: "Заказ не найден, обнови страницу" });
+      const r = await call("act", { admin: true, body: { ...(body || {}), key, action: m[2] } }); changed(); return resp(r.status, r.data);
+    }
+    if ((m = p.match(/^\/api\/admin\/reviews\/(\d+)\/([a-z]+)$/))) { const r = await call("reviewAct", { admin: true, body: { id: m[1], action: m[2] } }); changed(); return resp(r.status, r.data); }
+    return resp(404, { error: "Неизвестный запрос" });
+  };
+
+  // гость: вместо живых событий раз в минуту перечитываем настройки и отзывы
+  window.cloudEvents = function () {
+    const handlers = {};
+    const es = { addEventListener: (t, fn) => ((handlers[t] = handlers[t] || []).push(fn)), close() {}, onopen: null, onerror: null };
+    const fire = (t, d) => (handlers[t] || []).forEach((fn) => fn({ data: JSON.stringify(d) }));
+    setInterval(async () => {
+      try { const r = await call("boot"); if (r.status === 200) { fire("config", r.data.cfg); fire("reviews", { reviews: r.data.reviews }); } } catch {}
+    }, 60000);
+    return es;
+  };
+})();
+</script>
+<script>"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = (s) => String(s).toLowerCase().replace(/ё/g, "е");
+function hue(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; }
+function cover(t, extra = "") {
+  const h = hue(t.artist + t.title), ch = (String(t.artist).match(/[A-Za-zА-Яа-яЁё0-9]/) || ["♪"])[0].toUpperCase();
+  const bg = `background:linear-gradient(135deg,hsl(${h} 80% 58%),hsl(${(h + 50) % 360} 85% 40%))`;
+  if (t.cover) return `<span class="art ${extra}" style="${bg}" aria-hidden="true"><img src="${esc(t.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"><b>${esc(ch)}</b></span>`;
+  return `<span class="art ${extra}" style="${bg}" aria-hidden="true"><b>${esc(ch)}</b></span>`;
+}
+function hl(text, tokens) {
+  text = String(text);
+  if (!tokens.length) return esc(text);
+  const low = norm(text), mask = new Array(text.length).fill(false);
+  for (const tk of tokens) { let i = low.indexOf(tk); while (i > -1) { if (i === 0 || /[\s\-&(.,'"]/.test(low[i - 1])) for (let j = i; j < i + tk.length; j++) mask[j] = true; i = low.indexOf(tk, i + 1); } }
+  let out = "", on = false;
+  for (let i = 0; i < text.length; i++) { if (mask[i] && !on) { out += "<mark>"; on = true; } if (!mask[i] && on) { out += "</mark>"; on = false; } out += esc(text[i]); }
+  return out + (on ? "</mark>" : "");
+}
+async function api(p, opts = {}) {
+  let r;
+  try { r = await cloudFetch(p, { ...opts, headers: { "Content-Type": "application/json", ...(opts.headers || {}) } }); }
+  catch (e) { recoverLink(); throw new Error("Нет связи с диджеем. Переподключаюсь…"); }
+  const j = await r.json().catch(() => null);
+  if (!j) { recoverLink(); throw new Error("Нет связи с диджеем. Переподключаюсь…"); }
+  if (!r.ok) throw new Error(j.error || "Нет связи с сервером. Проверь интернет");
+  return j;
+}
+/* бесплатный туннель иногда меняет адрес. Если ноутбук перестал отвечать по этой ссылке,
+   узнаём новую на GitHub и переходим на неё, перенося «Мои заказы» через #t=… */
+let recovering = false;
+async function recoverLink() {
+  const repo = CFG.linkRepo; if (!repo || recovering) return; recovering = true;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}/contents/current.json?t=${Date.now()}`, { cache: "no-store", headers: { Accept: "application/vnd.github.raw+json" } });
+    const d = await r.json();
+    if (d && d.online && /^https:\/\/[a-z0-9-]+\.(lhr\.life|lhrtunnel\.link|trycloudflare\.com)$/.test(d.url) && d.url !== location.origin) {
+      const tks = store.get().join(",");
+      showReconnect();
+      location.replace(d.url + "/" + (tks ? "#t=" + tks : ""));
+      return;
+    }
+  } catch {}
+  setTimeout(() => (recovering = false), 8000);
+}
+function showReconnect() {
+  const el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status");
+  el.innerHTML = `<span class="ic" style="background:color-mix(in srgb,var(--amber) 22%,transparent);color:var(--amber)">↻</span><div style="min-width:0"><b>Диджей сменил адрес</b><span>Переподключаемся, заказы сохранятся</span></div>`;
+  document.querySelector("#phone")?.appendChild(el);
+}
+// перенос заказов со старого адреса
+(function importTokens() {
+  const m = location.hash.match(/^#t=([a-f0-9,]+)$/);
+  if (!m) return;
+  m[1].split(",").filter((x) => /^[a-f0-9]{32}$/.test(x)).reverse().forEach((tk) => { try { const a = JSON.parse(localStorage.getItem("drop-orders") || "[]").filter((x) => x !== tk); a.unshift(tk); localStorage.setItem("drop-orders", JSON.stringify(a.slice(0, 30))); } catch {} });
+  history.replaceState(null, "", location.pathname);
+})();
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("drop-orders") || "[]"); } catch { return []; } },
+  add(tk) { const a = this.get().filter((x) => x !== tk); a.unshift(tk); try { localStorage.setItem("drop-orders", JSON.stringify(a.slice(0, 30))); } catch {} },
+  remove(tks) { const a = this.get().filter((x) => !tks.includes(x)); try { localStorage.setItem("drop-orders", JSON.stringify(a)); } catch {} },
+};
+
+let CFG = { min: 10, max: 10000, accepting: true, methods: { sbp: true, card: false }, card: null, djName: "DJ" };
+const S = { amount: 10, picked: null, mine: [], showAll: false, popular: [] };
+
+/* ---------- форма ---------- */
+let sel = -1, lastRes = [], searchSeq = 0, searchTimer;
+const presets = () => [10, 30, 50, 100, 200, 500, 1000].filter((v) => v >= CFG.min).slice(0, 4);
+function renderOrder() {
+  const box = $("#orderArea");
+  if (!CFG.accepting) { box.innerHTML = `<div class="paused"><strong>Пауза в заказах</strong>Диджей сейчас не принимает треки. Загляни чуть позже.</div>`; return; }
+  if (S.picked) return renderPicked(box);
+  box.innerHTML = `<div class="search">
+    <label class="field" for="gQ"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="gQ" type="text" autocomplete="off" enterkeyhint="search" placeholder="Король и Шут, Мияги, Dua Lipa…" role="combobox" aria-expanded="false" aria-controls="sugg">
+      <button class="clear" id="gClear" hidden aria-label="Очистить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></label>
+    <div class="sugg" id="sugg" role="listbox" hidden></div>
+    <button class="own-btn" id="ownBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Нет в поиске? Впиши свою песню</button></div>
+    <div id="popBox"></div>`;
+  renderPopular();
+  $("#ownBtn").onclick = () => ownForm("");
+  const q = $("#gQ");
+  q.oninput = () => { sel = -1; $("#gClear").hidden = !q.value; clearTimeout(searchTimer); searchTimer = setTimeout(() => runSearch(q.value), 260); if (q.value.trim().length >= 2) loadingSugg(); else hideSugg(); };
+  q.onkeydown = (e) => {
+    const items = [...document.querySelectorAll(".s-item")];
+    if (e.key === "ArrowDown") { e.preventDefault(); sel = Math.min(sel + 1, items.length - 1); markSel(items); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); sel = Math.max(sel - 1, 0); markSel(items); }
+    else if (e.key === "Enter") { e.preventDefault(); if (sel > -1 && lastRes[sel]) choose(lastRes[sel]); else if (lastRes[0]) choose(lastRes[0]); else if (q.value.trim()) ownForm(q.value.trim()); }
+    else if (e.key === "Escape") hideSugg();
+  };
+  $("#gClear").onclick = (e) => { e.preventDefault(); q.value = ""; $("#gClear").hidden = true; hideSugg(); q.focus(); };
+}
+function renderPopular() {
+  const box = $("#popBox"); if (!box) return;
+  if (!S.popular.length) { box.innerHTML = ""; return; }
+  const tick = S.popular.map((t) => `<span>${esc(t.title)}</span>`).join("");
+  box.innerHTML = `<div class="pop" style="margin-top:22px"><h3>Сегодня заказывают</h3><div class="pop-row">${S.popular.map((t, i) => `<button class="pop-card" data-i="${i}" style="animation-delay:${0.15 + i * 0.06}s">${cover(t)}<div class="s-title">${esc(t.title)}</div><div class="s-artist">${esc(t.artist)}</div></button>`).join("")}</div></div>
+    ${S.popular.length >= 4 ? `<div class="ticker" style="margin-top:18px" aria-hidden="true"><div class="ticker-in">${tick}${tick}</div></div>` : ""}`;
+  box.querySelectorAll(".pop-card").forEach((b) => (b.onclick = () => choose(S.popular[+b.dataset.i])));
+}
+function hideSugg() { const b = $("#sugg"); if (b) { b.hidden = true; $("#gQ").setAttribute("aria-expanded", "false"); } lastRes = []; }
+function loadingSugg() {
+  const b = $("#sugg"); if (!b || !b.hidden && b.querySelector(".s-item")) return;
+  b.innerHTML = [0, 1, 2].map(() => `<div class="s-skel"><span></span><div><i></i><i></i></div></div>`).join(""); b.hidden = false;
+}
+async function runSearch(v) {
+  const term = v.trim(), my = ++searchSeq;
+  if (term.length < 2) return hideSugg();
+  let res = [], err = "";
+  try { res = (await api("/api/search?q=" + encodeURIComponent(term))).results; } catch (e) { err = e.message; }
+  if (my !== searchSeq || !$("#sugg")) return;
+  const tokens = norm(term).replace(/[.…]+/g, " ").split(/\s+/).filter(Boolean);
+  lastRes = res;
+  const box = $("#sugg");
+  let h = res.length ? res.map((t, i) => `<button class="s-item" role="option" data-i="${i}" aria-selected="false" style="animation-delay:${i * 35}ms">${cover(t)}
+      <span class="s-text"><span class="s-title" style="display:block">${hl(t.title, tokens)}</span><span class="s-artist" style="display:block">${hl(t.artist, tokens)}</span></span></button>`).join("")
+    : `<div class="s-empty">${err ? esc(err) + ". Можно вписать песню вручную." : "Ничего не нашлось. Впиши песню вручную."}</div>`;
+  h += `<button class="s-custom" id="custom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Нет в списке? Заказать «${esc(term)}»</button>`;
+  box.innerHTML = h; box.hidden = false; $("#gQ").setAttribute("aria-expanded", "true");
+  box.querySelectorAll(".s-item").forEach((b) => (b.onclick = () => choose(res[+b.dataset.i])));
+  $("#custom").onclick = () => ownForm(term);
+}
+function markSel(items) { items.forEach((it, i) => it.setAttribute("aria-selected", i === sel)); }
+function choose(t) { S.picked = { title: t.title, artist: t.artist, cover: t.cover || null }; S.amount = CFG.min; renderOrder(); }
+
+function ownForm(v) {
+  const p = v.split(/\s[-—–]\s/);
+  const artist = p.length > 1 ? p[0] : "", title = p.length > 1 ? p.slice(1).join(" — ") : v;
+  $("#orderArea").innerHTML = `<form class="own-form" id="ownF">
+    <h3>Своя песня</h3><p>Впиши, что хочешь услышать. Диджей найдёт трек сам.</p>
+    <div><div class="lbl"><label for="oTitle">Название</label></div><input class="inp" id="oTitle" maxlength="80" placeholder="Например, Хозяин леса" value="${esc(title)}"></div>
+    <div><div class="lbl"><label for="oArtist">Исполнитель</label><span>если знаешь</span></div><input class="inp" id="oArtist" maxlength="60" placeholder="Например, Король и Шут" value="${esc(artist)}"></div>
+    <div class="own-actions"><button type="button" class="back" id="oBack">Назад</button><button type="submit" class="cta" id="oNext">Дальше</button></div></form>`;
+  const t = $("#oTitle"), n = $("#oNext"), chk = () => (n.disabled = !t.value.trim());
+  t.oninput = chk; chk();
+  $("#oBack").onclick = () => renderOrder();
+  $("#ownF").onsubmit = (e) => { e.preventDefault(); if (!t.value.trim()) return; S.picked = { artist: $("#oArtist").value.trim() || "Исполнитель не указан", title: t.value.trim(), cover: null }; S.amount = CFG.min; renderOrder(); };
+  setTimeout(() => (title ? $("#oArtist") : t).focus(), 50);
+}
+
+function renderPicked(box) {
+  const t = S.picked;
+  if (S.amount < CFG.min) S.amount = CFG.min;
+  const pr = presets(), custom = !pr.includes(S.amount);
+  box.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px">
+    <div class="pick">${cover(t)}<div class="s-text"><div class="s-title">${esc(t.title)}</div><div class="s-artist">${esc(t.artist)}</div></div>
+      <button class="x" id="unpick" aria-label="Выбрать другой трек"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="inputs">
+      <div><div class="lbl"><label for="gName">Как тебя зовут</label><span>необязательно</span></div><input class="inp" id="gName" maxlength="24" placeholder="Например, Даша"></div>
+      <div><div class="lbl"><label for="gMsg">Привет или посвящение</label><span id="msgLeft">80</span></div><input class="inp" id="gMsg" maxlength="80" placeholder="Для лучшего столика в зале"></div>
+    </div>
+    <div>
+      <div class="lbl"><span style="color:var(--muted)">Сколько закинуть диджею</span><span>от ${CFG.min} ₽</span></div>
+      <div class="amts" id="amts">
+        ${pr.map((v) => `<button class="amt" data-v="${v}" aria-pressed="${!custom && v === S.amount}">${v}</button>`).join("")}
+        <label class="amt-own${custom ? " on" : ""}" for="gAmt"><input id="gAmt" inputmode="numeric" maxlength="5" placeholder="Своя" value="${custom ? S.amount : ""}" aria-label="Своя сумма в рублях"><span>₽</span></label>
+      </div>
+      <p class="amt-hint" id="amtHint"></p>
+    </div>
+    <button class="cta" id="payBtn">Заказать за&nbsp;<span class="sum-n" id="ctaSum">${S.amount}</span>&nbsp;₽</button>
+    <p class="fine">Если диджей отклонит трек, деньги вернутся.</p></div>`;
+  $("#unpick").onclick = () => { S.picked = null; renderOrder(); setTimeout(() => $("#gQ")?.focus(), 30); };
+  $("#gMsg").oninput = (e) => ($("#msgLeft").textContent = 80 - e.target.value.length);
+  $("#amts").querySelectorAll(".amt").forEach((b) => (b.onclick = () => { $("#gAmt").value = ""; setAmount(+b.dataset.v, false); }));
+  $("#gAmt").oninput = (e) => { const d = e.target.value.replace(/\D/g, ""); e.target.value = d; if (d) setAmount(+d, true); else setAmount(presets()[0], false); };
+  $("#payBtn").onclick = openPay;
+  updAmount(false);
+}
+function setAmount(v, isCustom) {
+  S.amount = v;
+  $("#amts").querySelectorAll(".amt").forEach((b) => b.setAttribute("aria-pressed", !isCustom && +b.dataset.v === v));
+  $(".amt-own").classList.toggle("on", isCustom);
+  updAmount(true);
+}
+function updAmount(anim) {
+  const v = S.amount, h = $("#amtHint"), btn = $("#payBtn"), n = $("#ctaSum");
+  const low = v < CFG.min, high = v > CFG.max;
+  n.textContent = v;
+  if (anim) { n.classList.remove("bump"); void n.offsetWidth; n.classList.add("bump"); }
+  btn.disabled = low || high;
+  h.className = "amt-hint";
+  if (low) { h.textContent = `Минимум ${CFG.min} ₽`; h.classList.add("warn"); }
+  else if (high) { h.textContent = `Максимум ${CFG.max.toLocaleString("ru")} ₽ за трек`; h.classList.add("warn"); }
+  else if (v >= 100) { h.textContent = "Щедро! Диджей увидит твой заказ выделенным"; h.classList.add("hot"); }
+  else if (v > CFG.min) h.textContent = "Спасибо! Заказ будет заметнее в списке у диджея";
+  else h.textContent = "Можно оставить минимум или закинуть больше, решать тебе";
+}
+
+/* ---------- шторка ---------- */
+const X_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`;
+let sheetTimer = null;
+function openSheet(title) {
+  const ov = $("#overlay");
+  ov.innerHTML = `<div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">
+    <div class="sheet-head" id="sheetHead"><div class="grab"></div><h4 id="shT">${title}</h4><button class="sh-x" id="shX" aria-label="Закрыть">${X_SVG}</button></div>
+    <div id="sheetBody"></div></div>`;
+  $("#scrim").onclick = closeSheet; $("#shX").onclick = closeSheet;
+  $("#shX").addEventListener("pointerdown", (e) => e.stopPropagation());
+  const sh = $("#sheet"), hd = $("#sheetHead"); let y0 = null, dy = 0;
+  hd.addEventListener("pointerdown", (e) => { y0 = e.clientY; dy = 0; sh.style.transition = "none"; hd.setPointerCapture(e.pointerId); });
+  hd.addEventListener("pointermove", (e) => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sh.style.transform = `translateY(${dy}px)`; $("#scrim").style.opacity = String(Math.max(0.2, 1 - dy / 400)); });
+  const end = () => { if (y0 === null) return; y0 = null; sh.style.transition = ""; if (dy > 80) closeSheet(); else { sh.style.transform = ""; $("#scrim").style.opacity = ""; } };
+  hd.addEventListener("pointerup", end); hd.addEventListener("pointercancel", end);
+  return $("#sheetBody");
+}
+function closeSheet() {
+  clearTimeout(sheetTimer);
+  const sh = $("#sheet"), sc = $("#scrim"); if (!sh) return;
+  sh.style.transform = ""; sh.classList.add("closing"); sc.classList.add("closing");
+  setTimeout(() => { if ($("#sheet") === sh) $("#overlay").innerHTML = ""; }, 300);
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("#sheet")) closeSheet(); });
+
+let method = "sbp";
+const YM = () => CFG.provider === "yoomoney";
+const MANUAL = () => CFG.provider === "manual";
+const payLabel = (amt) => YM() ? `Оплатить ${amt} ₽ картой` : `Оплатить ${amt} ₽ через СБП`;
+function openPay() {
+  const name = $("#gName").value.trim(), msg = $("#gMsg").value.trim(), t = S.picked, amt = S.amount;
+  if (!CFG.methods.card) method = "sbp";
+  if (!CFG.methods.sbp) method = "card";
+  const body = openSheet("Оплата заказа");
+  body.innerHTML = `<div style="display:flex;gap:12px;align-items:center">${cover(t)}<div class="s-text"><div class="s-title">${esc(t.title)}</div><div class="s-artist">${esc(t.artist)}</div></div></div>
+    <div class="sum" style="margin-top:14px"><span style="color:var(--muted);font-weight:600">К оплате</span><span class="big">${amt}<small>₽</small></span></div>
+    ${CFG.methods.card && CFG.methods.sbp ? `<div class="methods">
+      <button class="method" data-m="sbp" aria-pressed="${method === "sbp"}">${YM() ? "Картой<small>любой банк, сразу</small>" : MANUAL() ? "СБП<small>по номеру телефона</small>" : "СБП<small>в приложении банка</small>"}</button>
+      <button class="method" data-m="card" aria-pressed="${method === "card"}">Перевод<small>по номеру карты</small></button></div>` : ""}
+    <div id="payInfo"></div>`;
+  body.querySelectorAll(".method").forEach((b) => (b.onclick = () => { method = b.dataset.m; body.querySelectorAll(".method").forEach((x) => x.setAttribute("aria-pressed", x === b)); info(); }));
+  const payload = (extra) => JSON.stringify({ title: t.title, artist: t.artist, cover: t.cover, name, msg, amount: amt, method, ...extra });
+  const fail = (e, btn, label) => { btn.disabled = false; btn.textContent = label; let er = $("#payErr"); if (!er) { er = document.createElement("p"); er.id = "payErr"; er.className = "err"; er.style.margin = "10px 0 0"; btn.after(er); } er.textContent = e.message; };
+  function info() {
+    const box = $("#payInfo");
+    if (MANUAL() || method === "card") return manualInfo(box);
+    if (method === "sbp") {
+      box.innerHTML = `<div class="hold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>${YM() ? `Откроется защищённая страница ЮMoney, там вводишь данные карты. Диджей сразу увидит оплату. Если отклонит трек, вернёт ${amt} ₽.` : `Откроется банк для оплаты по СБП. Если диджей отклонит трек, ${amt} ₽ вернутся автоматически.`}</span></div>
+        <button class="cta" id="doPay">${payLabel(amt)}</button>${CFG.test ? `<p class="fine" style="margin:10px 0 0">Тестовый режим: деньги не списываются</p>` : ""}`;
+      $("#doPay").onclick = async () => {
+        const b = $("#doPay"); b.disabled = true; b.textContent = YM() ? "Открываем оплату…" : "Открываем банк…";
+        try { const r = await api("/api/orders", { method: "POST", body: payload() }); store.add(r.token); location.href = r.pay_url; }
+        catch (e) { fail(e, b, payLabel(amt)); }
+      };
     }
   }
-  retry.onclick = go;
-  go();
+  function manualInfo(box) {
+    const sbp = method === "sbp";
+    const value = sbp ? CFG.sbpPhone : CFG.card;
+    const bank = CFG.bank ? ` · ${esc(CFG.bank)}` : "";
+    box.innerHTML = `
+      ${sbp && CFG.sbpLink ? `<a class="cta sbp-go" id="sbpGo" href="${esc(CFG.sbpLink)}" target="_blank" rel="noopener">Перевести ${amt} ₽ по СБП<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg></a>` : ""}
+      ${value ? `<div class="cardnum"><span class="lbl2">${sbp ? "Номер для СБП" : "Карта диджея"}${bank}</span><b id="cardNo">${esc(value)}</b><button class="copy" id="copyBtn">Скопировать</button></div>` : ""}
+      <ol class="steps">${sbp
+        ? `<li>${CFG.sbpLink ? "Нажми кнопку, выбери свой банк" : "Открой приложение своего банка, перевод по номеру телефона"}.</li><li>Впиши сумму <b>${amt} ₽</b> и отправь перевод.</li><li>Вернись сюда, напиши имя отправителя и нажми «Я перевёл».</li>`
+        : `<li>Скопируй номер карты.</li><li>Переведи <b>${amt} ₽</b> в приложении своего банка.</li><li>Вернись сюда, напиши имя отправителя и нажми «Я перевёл».</li>`}</ol>
+      <div style="margin-bottom:14px"><div class="lbl"><label for="gSender">Имя отправителя, как в банке</label></div><input class="inp" id="gSender" maxlength="40" placeholder="Например, Дарья К." value="${esc(name)}"></div>
+      <button class="cta ${sbp && CFG.sbpLink ? "cta-2" : ""}" id="doPay">Я перевёл ${amt} ₽</button>
+      <p class="fine" style="margin:10px 0 0">Диджей сверит перевод по имени и сумме. Если отклонит трек, вернёт деньги.</p>`;
+    const cb = $("#copyBtn");
+    if (cb) cb.onclick = () => {
+      const ok = () => { cb.textContent = "Скопировано"; cb.classList.add("ok"); setTimeout(() => { cb.textContent = "Скопировать"; cb.classList.remove("ok"); }, 1800); };
+      const fb = () => { const r = document.createRange(); r.selectNodeContents($("#cardNo")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); cb.textContent = "Выделено, скопируй"; };
+      try { navigator.clipboard.writeText(sbp ? value.replace(/[^\d+]/g, "") : value.replace(/\s/g, "")).then(ok, fb); } catch { fb(); }
+    };
+    const sIn = $("#gSender"), b = $("#doPay"); const chk = () => (b.disabled = !sIn.value.trim()); sIn.oninput = chk; chk();
+    b.onclick = async () => {
+      b.disabled = true; b.textContent = "Отправляем…";
+      try { const r = await api("/api/orders", { method: "POST", body: payload({ sender: sIn.value.trim() }) }); store.add(r.token); S.picked = null; success("Диджей сверит перевод и ответит. Статус появится в «Моих заказах»."); renderOrder(); refreshMine(); }
+      catch (e) { fail(e, b, `Я перевёл ${amt} ₽`); }
+    };
+  }
+  info();
+}
+function success(text) {
+  const body = $("#sheetBody"); if (!body) return;
+  $("#shT").textContent = "Готово";
+  body.innerHTML = `<div class="done"><div class="check-ok"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#1d0b12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+    <h4 style="margin:0 0 6px">Заказ у диджея!</h4><p class="center-txt">${text}</p><button class="cta" id="okBtn">Круто</button></div>`;
+  confetti(); $("#okBtn").onclick = closeSheet; $("#okBtn").focus();
+}
+// возврат из банка: ?order=ID&t=TOKEN
+async function handleReturn() {
+  const u = new URL(location.href), tk = u.searchParams.get("t");
+  if (!tk) return;
+  store.add(tk); history.replaceState(null, "", "/");
+  const body = openSheet("Проверяем оплату");
+  body.innerHTML = `<div class="spin"></div><p class="center-txt">Ждём подтверждение оплаты…</p>`;
+  for (let i = 0; i < 30; i++) {
+    try {
+      const o = (await api("/api/orders/mine?t=" + tk)).orders[0];
+      if (o && o.status !== "awaiting_payment") {
+        if (o.status === "payment_failed") { $("#shT").textContent = "Оплата не прошла"; body.innerHTML = `<p class="center-txt" style="margin-top:8px">Деньги не списались. Можно попробовать ещё раз.</p><button class="cta" id="okBtn">Понятно</button>`; $("#okBtn").onclick = closeSheet; }
+        else success("Оплата прошла. Ответ диджея появится в «Моих заказах».");
+        refreshMine(); return;
+      }
+    } catch {}
+    if (!$("#sheet")) return;
+    await new Promise((r) => (sheetTimer = setTimeout(r, 2000)));
+  }
+  $("#shT").textContent = "Оплата ещё обрабатывается";
+  body.innerHTML = `<p class="center-txt" style="margin-top:8px">Банк пока не подтвердил платёж. Статус обновится сам в «Моих заказах».</p><button class="cta" id="okBtn">Хорошо</button>`;
+  $("#okBtn").onclick = closeSheet;
+}
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = document.createElement("div"); c.className = "confetti";
+  const cols = ["#FF4F6D", "#FFB23E", "#38E8C2", "#6FB8FF", "#F7F2FF", "#FF7A4D"];
+  for (let i = 0; i < 60; i++) { const p = document.createElement("i"); p.style.left = Math.random() * 100 + "%"; p.style.background = cols[i % cols.length]; p.style.animationDelay = Math.random() * 0.35 + "s"; p.style.animationDuration = 1.2 + Math.random() + "s"; p.style.transform = `rotate(${Math.random() * 360}deg)`; if (i % 3 === 0) { p.style.width = "7px"; p.style.height = "7px"; p.style.borderRadius = "50%"; } c.appendChild(p); }
+  $("#overlay").appendChild(c); setTimeout(() => c.remove(), 2600);
+}
+
+/* ---------- мои заказы ---------- */
+function label(r) {
+  switch (r.status) {
+    case "awaiting_payment": return "Ждём оплату";
+    case "payment_failed": return "Оплата не прошла";
+    case "pending": return r.method === "card" || MANUAL() ? "Диджей проверяет перевод" : "Оплачено · ждёт ответа диджея";
+    case "queued": return `Принято · ${r.queuePos > 1 ? r.queuePos + "-й в очереди" : "следующий"}`;
+    case "played": return "Сыграно · спасибо!";
+    case "rejected":
+      if (r.refund === "none") return "Отклонено · оплата не пришла";
+      if (r.method === "card" || MANUAL()) return r.refund === "done" ? `Отклонено · ${r.amount} ₽ возвращены` : `Отклонено · диджей вернёт ${r.amount} ₽`;
+      if (r.refund === "done") return `Отклонено · ${r.amount} ₽ вернулись`;
+      return r.refund === "manual" ? `Отклонено · диджей вернёт ${r.amount} ₽` : `Отклонено · ${r.amount} ₽ вернутся в течение суток`;
+  }
+  return "";
+}
+const stClass = (s) => ({ awaiting_payment: "pending", payment_failed: "rejected" }[s] || s);
+let prev = new Map();
+// в облаке спрашиваем только незавершённые заказы: сыгранные и отклонённые больше не меняются
+const FINAL_ST = ["played", "rejected"];
+const mineCache = new Map();
+async function refreshMine() {
+  const tks = store.get();
+  if (!tks.length) { S.mine = []; renderMine(); return; }
+  const ask = tks.filter((t) => !mineCache.has(t) || !FINAL_ST.includes(mineCache.get(t).status));
+  try {
+    if (ask.length) {
+      const list = (await api("/api/orders/mine?t=" + ask.join(","))).orders;
+      for (const o of list) { const p = prev.get(o.id); if (p && p !== o.status) toast(o); prev.set(o.id, o.status); mineCache.set(o.token, o); }
+    }
+    S.mine = tks.map((t) => mineCache.get(t)).filter(Boolean).sort((a, b) => b.id - a.id);
+    renderMine();
+  } catch {}
+}
+function renderMine() {
+  const m = S.mine; $("#mySec").hidden = !m.length; $("#myCount").textContent = m.length;
+  const list = S.showAll ? m : m.slice(0, 3);
+  const done = (r) => ["queued", "played", "rejected", "payment_failed"].includes(r.status);
+  const finished = m.filter((r) => ["played", "rejected", "payment_failed"].includes(r.status));
+  $("#clearDone").hidden = finished.length < 2;
+  $("#myList").innerHTML = list.map((r) => `<div class="mycard st-${stClass(r.status)}" data-tk="${esc(r.token)}">${cover(r)}<div class="s-text" style="flex:1"><div class="s-title">${esc(r.title)}</div><div class="s-artist">${esc(r.artist)} · ${r.amount} ₽</div><span class="status"><i></i>${label(r)}</span>${r.status === "rejected" && r.reason && r.refund !== "none" ? `<span class="why">Причина: ${esc(r.reason)}</span>` : ""}</div>${r.pay_url ? `<a class="ghost" href="${esc(r.pay_url)}">Оплатить</a>` : ""}${done(r) ? `<button class="del" data-del="${esc(r.token)}" data-q="${r.status === "queued" ? 1 : ""}" aria-label="Убрать из списка" title="Убрать из списка"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ""}</div>`).join("");
+  $("#myList").querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
+    if (b.dataset.q && !b.classList.contains("armed")) { b.classList.add("armed"); b.innerHTML = "Трек всё равно сыграет. Убрать?"; setTimeout(() => { if (b.isConnected && b.classList.contains("armed")) renderMine(); }, 3500); return; }
+    removeMine([b.dataset.del]);
+  }));
+  const mb = $("#moreBtn"); mb.hidden = m.length <= 3; mb.textContent = S.showAll ? "Свернуть" : `Показать все (${m.length})`;
+}
+$("#moreBtn").onclick = () => { S.showAll = !S.showAll; renderMine(); };
+function removeMine(tks) {
+  const cards = tks.map((tk) => document.querySelector(`.mycard[data-tk="${CSS.escape(tk)}"]`)).filter(Boolean);
+  cards.forEach((c) => c.classList.add("gone"));
+  setTimeout(() => {
+    store.remove(tks);
+    S.mine = S.mine.filter((o) => !tks.includes(o.token));
+    renderMine();
+  }, cards.length ? 320 : 0);
+}
+$("#clearDone").onclick = () => removeMine(S.mine.filter((r) => ["played", "rejected", "payment_failed"].includes(r.status)).map((r) => r.token));
+let toastTimer;
+function toast(r) {
+  const map = { queued: ["var(--mint)", "✓", "Диджей принял твой трек"], rejected: ["var(--muted)", "↩", r.reason ? `Отклонено: ${r.reason}` : "Трек отклонён"], played: ["var(--coral)", "♪", "Твой трек прозвучал!"], pending: ["var(--amber)", "₽", "Оплата прошла"] };
+  const m = map[r.status]; if (!m) return;
+  document.querySelector(".toast")?.remove();
+  const el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status");
+  el.innerHTML = `<span class="ic" style="background:color-mix(in srgb,${m[0]} 22%,transparent);color:${m[0]}">${m[1]}</span><div style="min-width:0"><b>${m[2]}</b><span>${esc(r.artist)} · ${esc(r.title)}</span></div>`;
+  $("#phone").appendChild(el); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 360); }, 3600);
+  if (r.status === "played" || r.status === "queued") try { navigator.vibrate && navigator.vibrate(60); } catch {}
+}
+
+/* ---------- старт ---------- */
+(function bars() { const b = $("#bars"); let h = ""; for (let i = 0; i < 28; i++) h += `<span style="animation-delay:${-(Math.random() * 1.2).toFixed(2)}s;animation-duration:${(0.8 + Math.random() * 0.8).toFixed(2)}s"></span>`; b.innerHTML = h; })();
+function applyCfg(c) {
+  const was = CFG.accepting + "|" + CFG.min; CFG = c;
+  $("#djName").textContent = c.djName;
+  $("#eyebrowState").textContent = c.accepting ? "заказы открыты" : "пауза в заказах";
+  if (was !== c.accepting + "|" + c.min && !$("#ownF")) renderOrder();
+}
+async function loadPopular() { try { S.popular = (await api("/api/popular")).results; renderPopular(); } catch {} }
+/* отзывы: бегущая лента карточек + форма */
+let REVIEW_TAGS = ["Музыка", "Атмосфера", "Быстро ставит заказы", "Подача и драйв", "Звук", "Общение с залом", "Свои треки", "Танцевали всю ночь"];
+function renderReviews(list) {
+  const box = $("#reviewsBox"); if (!box) return;
+  const head = `<div class="rv-head"><h3>Отзывы гостей</h3><button class="rv-add" id="rvAdd"><span>★</span> Оставить отзыв</button></div>`;
+  if (!list || !list.length) {
+    box.innerHTML = head + `<button class="rv-empty" id="rvAdd2">Пока отзывов нет. Будь первым: расскажи, как тебе вечер ★</button>`;
+  } else {
+    const card = (r) => `<figure class="rv">${r.stars ? `<div class="rv-stars" aria-label="${r.stars} из 5">${"★".repeat(r.stars)}<span>${"★".repeat(5 - r.stars)}</span></div>` : ""}${r.text ? `<blockquote>${esc(r.text)}</blockquote>` : ""}${r.tags && r.tags.length ? `<div class="rv-tags">${r.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}<figcaption>${esc(r.name)}${r.date ? ` · ${esc(r.date)}` : ""}</figcaption></figure>`;
+    const row = list.map(card).join("");
+    const dur = Math.max(30, list.length * 9);
+    const moving = list.length >= 3;
+    box.innerHTML = head + `<div class="rv-track${moving ? "" : " still"}" style="--dur:${dur}s"><div class="rv-row">${row}${moving ? row : ""}</div></div>`;
+  }
+  box.hidden = false;
+  $("#rvAdd").onclick = openReview; const b2 = $("#rvAdd2"); if (b2) b2.onclick = openReview;
+}
+const STAR_WORDS = ["", "Плохо", "Так себе", "Нормально", "Хорошо", "Огонь!"];
+function openReview() {
+  const body = openSheet("Как тебе вечер?");
+  let stars = 0; const tags = new Set();
+  body.innerHTML = `<form class="rvf" id="rvf" novalidate>
+    <div class="stars-pick" id="starsPick" role="radiogroup" aria-label="Оценка">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star" data-n="${n}" role="radio" aria-checked="false" aria-label="${n} из 5">★</button>`).join("")}</div>
+    <p class="star-word" id="starWord">Нажми на звёзды</p>
+    <div><div class="lbl"><label for="rvName">Имя</label><span>необязательно</span></div><input class="inp" id="rvName" maxlength="30" placeholder="Как тебя подписать"></div>
+    <div><div class="lbl"><span style="color:var(--muted)">Что понравилось</span><span>можно несколько</span></div>
+      <div class="tag-pick" id="tagPick">${REVIEW_TAGS.map((t) => `<button type="button" class="tag" aria-pressed="false">${esc(t)}</button>`).join("")}</div></div>
+    <div><div class="lbl"><label for="rvLiked">Расскажи подробнее</label><span id="rvLeft">400</span></div><textarea class="inp" id="rvLiked" maxlength="400" rows="3" placeholder="Что запомнилось больше всего?"></textarea></div>
+    <div><div class="lbl"><label for="rvImprove">Что можно улучшить</label><span>необязательно</span></div><input class="inp" id="rvImprove" maxlength="300" placeholder="Больше рэпа, громче, свет…"></div>
+    <div><div class="lbl"><label for="rvWish">Какой трек ждёшь в следующий раз</label><span>необязательно</span></div><input class="inp" id="rvWish" maxlength="100" placeholder="Исполнитель — название"></div>
+    <button class="cta" type="submit" id="rvSend" disabled>Отправить отзыв</button>
+    <p class="err" id="rvErr" hidden></p>
+  </form>`;
+  const pick = $("#starsPick"), word = $("#starWord"), send = $("#rvSend");
+  const paint = (n, hover) => pick.querySelectorAll(".star").forEach((b) => { const on = +b.dataset.n <= n; b.classList.toggle("on", on); b.classList.toggle("hov", !!hover && on); });
+  pick.querySelectorAll(".star").forEach((b) => {
+    b.onclick = () => {
+      stars = +b.dataset.n; paint(stars);
+      pick.querySelectorAll(".star").forEach((x) => x.setAttribute("aria-checked", +x.dataset.n === stars));
+      b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+      word.textContent = STAR_WORDS[stars]; word.className = "star-word s" + stars;
+      if (stars === 5) confetti();
+      check();
+    };
+    b.onmouseenter = () => paint(+b.dataset.n, true);
+  });
+  pick.onmouseleave = () => paint(stars);
+  $("#tagPick").querySelectorAll(".tag").forEach((b) => (b.onclick = () => { const t = b.textContent; tags.has(t) ? tags.delete(t) : tags.add(t); b.setAttribute("aria-pressed", tags.has(t)); check(); }));
+  $("#rvLiked").oninput = (e) => { $("#rvLeft").textContent = 400 - e.target.value.length; check(); };
+  function check() { send.disabled = !stars || (!tags.size && !$("#rvLiked").value.trim()); }
+  $("#rvf").onsubmit = async (e) => {
+    e.preventDefault(); if (send.disabled) return;
+    send.disabled = true; send.textContent = "Отправляем…"; $("#rvErr").hidden = true;
+    try {
+      const r = await api("/api/reviews", { method: "POST", body: JSON.stringify({ stars, name: $("#rvName").value, tags: [...tags], liked: $("#rvLiked").value, improve: $("#rvImprove").value, wish: $("#rvWish").value }) });
+      $("#shT").textContent = "Спасибо!";
+      body.innerHTML = `<div class="done"><div class="check-ok"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#1d0b12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+        <h4 style="margin:0 0 6px">Отзыв отправлен</h4><p class="center-txt">${r.shown ? "Он уже появился в ленте отзывов." : "Диджей посмотрит его перед публикацией."}</p><button class="cta" id="okBtn">Круто</button></div>`;
+      confetti(); $("#okBtn").onclick = closeSheet;
+    } catch (er) { send.disabled = false; send.textContent = "Отправить отзыв"; $("#rvErr").textContent = er.message; $("#rvErr").hidden = false; }
+  };
+}
+(async function start() {
+  const boot = window.__BOOT || await api("/api/boot").catch(() => null);
+  if (boot && boot.reviewTags) REVIEW_TAGS = boot.reviewTags;
+  if (boot && boot.cfg) { applyCfg(boot.cfg); S.popular = boot.popular || []; renderReviews(boot.reviews); }
+  else { renderReviews([]); try { applyCfg(await api("/api/config")); } catch (e) { $("#orderArea").innerHTML = `<div class="paused"><strong>Нет связи</strong>${esc(e.message)}</div>`; return; } loadPopular(); }
+  renderOrder(); refreshMine(); handleReturn();
+  const es = cloudEvents();
+  let esFails = 0;
+  es.onopen = () => (esFails = 0);
+  es.onerror = () => { if (++esFails >= 2) recoverLink(); };
+  es.addEventListener("changed", () => { refreshMine(); });
+  es.addEventListener("config", (e) => applyCfg(JSON.parse(e.data)));
+  es.addEventListener("reviews", (e) => renderReviews(JSON.parse(e.data).reviews));
+  setInterval(loadPopular, 5 * 60 * 1000);
+  setInterval(refreshMine, 15000); // запасной вариант, если живые обновления не доходят
 })();
 </script>
 </body>
